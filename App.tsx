@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { TRPCProvider } from "@/lib/trpc";
 import Home from "./pages/Home";
 import Feed from "./pages/Feed";
 import Dashboard from "./pages/Dashboard";
@@ -15,6 +16,7 @@ import TracksSelection from "./pages/TracksSelection";
 import TrackDetail from "./pages/TrackDetail";
 import StageDetail from "./pages/StageDetail";
 import TaskDetail from "./pages/TaskDetail";
+import TaskExecution from "@/pages/TaskExecution";
 
 function Router() {
   return (
@@ -28,6 +30,7 @@ function Router() {
       <Route path={"/tracks"} component={TracksSelection} />
       <Route path={"/track/:id"} component={TrackDetail} />
       <Route path={"/stage/:id"} component={StageDetail} />
+      <Route path={"/task/:id/execute"} component={TaskExecution} />
       <Route path={"/task/:id"} component={TaskDetail} />
       <Route path={"/track-old/:id"} component={TrackView} />
       <Route path={"/module/:id"} component={ModuleView} />
@@ -50,8 +53,10 @@ function App() {
         // switchable
       >
         <TooltipProvider>
-          <Toaster />
-          <Router />
+          <TRPCProvider>
+            <Toaster />
+            <Router />
+          </TRPCProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
