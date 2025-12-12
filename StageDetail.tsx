@@ -94,7 +94,7 @@ export default function StageDetail() {
                   className={`border-blue-200 hover:border-blue-400 transition-all cursor-pointer hover:shadow-md ${
                     isCompleted ? 'bg-blue-50/50' : 'bg-white'
                   }`}
-                  onClick={() => setLocation(`/task/${task.id}`)}
+                  onClick={() => setLocation(`/task/${task.id}/execute`)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
