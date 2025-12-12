@@ -57,6 +57,10 @@ export const appRouter = router({
       const { getStagesByTrackId } = await import("./db");
       return await getStagesByTrackId(input.trackId);
     }),
+    getTasks: publicProcedure.input(z.object({ trackId: z.number() })).query(async ({ input }) => {
+      const { getTasksByTrackId } = await import("./db");
+      return await getTasksByTrackId(input.trackId);
+    }),
   }),
   
   // Stages router
@@ -79,8 +83,8 @@ export const appRouter = router({
     }),
     complete: protectedProcedure.input(z.object({ taskId: z.number(), score: z.number().optional() })).mutation(async ({ ctx, input }) => {
       const { completeTask } = await import("./db");
-      const success = await completeTask(ctx.user.id, input.taskId, input.score);
-      return { success };
+      const result = await completeTask(ctx.user.id, input.taskId, input.score);
+      return result;
     }),
     getMyProgress: protectedProcedure.input(z.object({ taskId: z.number() })).query(async ({ ctx, input }) => {
       const { getUserTaskProgress } = await import("./db");

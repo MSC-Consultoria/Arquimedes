@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, BookOpen, Circle, Clock, Loader2, Play } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, Circle, Clock, Loader2, Play } from "lucide-react";
+import { useMemo } from "react";
 import { useLocation, useParams } from "wouter";
+import BottomNav from "./BottomNav";
 
 export default function TrackDetail() {
   const params = useParams();
@@ -12,8 +14,20 @@ export default function TrackDetail() {
 
   const { data: track, isLoading: trackLoading } = trpc.tracks.getById.useQuery({ id: trackId });
   const { data: stages, isLoading: stagesLoading } = trpc.tracks.getStages.useQuery({ trackId });
+  const { data: tasksByTrack } = trpc.tracks.getTasks.useQuery({ trackId }, { enabled: !!trackId });
+  const { data: progressByTrack } = trpc.progress.getMyProgressByTrack.useQuery(
+    { trackId },
+    { enabled: !!trackId }
+  );
 
   const isLoading = trackLoading || stagesLoading;
+
+  const totalTasks = tasksByTrack?.length || progressByTrack?.length || 0;
+  const completedTasks = useMemo(
+    () => progressByTrack?.filter((item) => item.status === "completed").length || 0,
+    [progressByTrack]
+  );
+  const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   if (isLoading) {
     return (
@@ -70,9 +84,10 @@ export default function TrackDetail() {
             <div>
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-gray-700 font-medium">Seu Progresso</span>
-                <span className="text-blue-600 font-semibold">0%</span>
+                <span className="text-blue-600 font-semibold">{progressPercent}%</span>
               </div>
-              <Progress value={0} className="h-3" />
+              <Progress value={progressPercent} className="h-3" />
+              <p className="text-xs text-gray-500 mt-1">{completedTasks} de {totalTasks} tarefas concluídas</p>
             </div>
 
             {/* Meta Info */}
@@ -100,39 +115,53 @@ export default function TrackDetail() {
         <h2 className="text-lg font-bold text-gray-900 mb-4">Estágios da Trilha</h2>
         <div className="space-y-3">
           {stages && stages.length > 0 ? (
-            stages.map((stage, index) => (
-              <Card 
-                key={stage.id}
-                className="border-blue-200 hover:border-blue-400 transition-all cursor-pointer hover:shadow-md"
-                onClick={() => setLocation(`/stage/${stage.id}`)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    {/* Stage Number */}
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold">
-                      {index + 1}
-                    </div>
+            stages.map((stage, index) => {
+              const stageTasks = tasksByTrack?.filter((item) => item.stageId === stage.id).map((item) => item.task) || [];
+              const stageCompleted = stageTasks.filter((task) =>
+                progressByTrack?.some((p) => p.contentId === (task.contentId ?? task.id) && p.status === "completed")
+              );
+              const stageTotal = stageTasks.length || 1;
+              const stagePercent = Math.round((stageCompleted.length / stageTotal) * 100);
+              const stageDone = stageCompleted.length === stageTasks.length && stageTasks.length > 0;
 
-                    {/* Stage Info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 mb-1">{stage.title}</h3>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-3">{stage.description}</p>
+              return (
+                <Card
+                  key={stage.id}
+                  className="border-blue-200 hover:border-blue-400 transition-all cursor-pointer hover:shadow-md"
+                  onClick={() => setLocation(`/stage/${stage.id}`)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      {/* Stage Number */}
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold">
+                        {index + 1}
+                      </div>
 
-                      {/* Progress */}
-                      <div className="flex items-center gap-2">
-                        <Progress value={0} className="h-1.5 flex-1" />
-                        <span className="text-xs text-gray-500 flex-shrink-0">0/0</span>
+                      {/* Stage Info */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 mb-1">{stage.title}</h3>
+                        <p className="text-sm text-gray-600 line-clamp-2 mb-3">{stage.description}</p>
+
+                        {/* Progress */}
+                        <div className="flex items-center gap-2">
+                          <Progress value={stagePercent} className="h-1.5 flex-1" />
+                          <span className="text-xs text-gray-500 flex-shrink-0">{stageCompleted.length}/{stageTasks.length}</span>
+                        </div>
+                      </div>
+
+                      {/* Status Icon */}
+                      <div className="flex-shrink-0">
+                        {stageDone ? (
+                          <CheckCircle2 className="w-6 h-6 text-green-500" />
+                        ) : (
+                          <Circle className="w-6 h-6 text-gray-300" />
+                        )}
                       </div>
                     </div>
-
-                    {/* Status Icon */}
-                    <div className="flex-shrink-0">
-                      <Circle className="w-6 h-6 text-gray-300" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              );
+            })
           ) : (
             <Card className="border-blue-200">
               <CardContent className="p-8 text-center">
@@ -148,7 +177,7 @@ export default function TrackDetail() {
       {stages && stages.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-blue-100 px-4 py-3">
           <div className="container max-w-2xl">
-            <Button 
+            <Button
               className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
               size="lg"
               onClick={() => setLocation(`/stage/${stages[0].id}`)}
@@ -159,6 +188,7 @@ export default function TrackDetail() {
           </div>
         </div>
       )}
+      <BottomNav />
     </div>
   );
 }

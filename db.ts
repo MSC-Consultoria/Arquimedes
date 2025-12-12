@@ -1,3 +1,6 @@
+import { and, eq } from "drizzle-orm";
+import { getDb } from "./_core/db";
+
 export async function getContentById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
@@ -146,4 +149,125 @@ export async function getTaskById(id: number) {
   const { tasks } = await import("../drizzle/schema");
   const result = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1);
   return result.length > 0 ? result[0] : null;
+}
+
+export async function getTasksByTrackId(trackId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { tasks, stages } = await import("../drizzle/schema");
+
+  return await db
+    .select({ task: tasks, stageId: stages.id })
+    .from(tasks)
+    .innerJoin(stages, eq(tasks.stageId, stages.id))
+    .where(eq(stages.trackId, trackId))
+    .orderBy(tasks.orderIndex);
+}
+
+export async function getUserTaskProgress(userId: number, taskId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const { tasks, stages, userProgress } = await import("../drizzle/schema");
+
+  const taskWithStage = await db
+    .select({ task: tasks, stage: stages })
+    .from(tasks)
+    .innerJoin(stages, eq(tasks.stageId, stages.id))
+    .where(eq(tasks.id, taskId))
+    .limit(1);
+
+  if (taskWithStage.length === 0) return null;
+
+  const { task, stage } = taskWithStage[0];
+  const contentIdentifier = task.contentId ?? task.id;
+
+  const result = await db
+    .select()
+    .from(userProgress)
+    .where(and(eq(userProgress.userId, userId), eq(userProgress.contentId, contentIdentifier)))
+    .limit(1);
+
+  return result.length > 0
+    ? result[0]
+    : {
+        userId,
+        trackId: stage.trackId,
+        contentId: contentIdentifier,
+        status: "not_started",
+      };
+}
+
+function getEraForLevel(level: number) {
+  if (level >= 30) return "era_futura";
+  if (level >= 25) return "era_digital";
+  if (level >= 20) return "era_moderna";
+  if (level >= 15) return "revolucao_industrial";
+  if (level >= 10) return "renascimento";
+  return "idade_media";
+}
+
+export async function completeTask(userId: number, taskId: number, score?: number) {
+  const db = await getDb();
+  if (!db) return false;
+  const { tasks, stages, userProgress, userGamification } = await import("../drizzle/schema");
+
+  const taskWithStage = await db
+    .select({ task: tasks, stage: stages })
+    .from(tasks)
+    .innerJoin(stages, eq(tasks.stageId, stages.id))
+    .where(eq(tasks.id, taskId))
+    .limit(1);
+
+  if (taskWithStage.length === 0) return false;
+
+  const { task, stage } = taskWithStage[0];
+  const contentIdentifier = task.contentId ?? task.id;
+
+  const existingProgress = await db
+    .select()
+    .from(userProgress)
+    .where(and(eq(userProgress.userId, userId), eq(userProgress.contentId, contentIdentifier)))
+    .limit(1);
+
+  if (existingProgress.length > 0) {
+    await db
+      .update(userProgress)
+      .set({
+        status: "completed",
+        completedAt: new Date(),
+        quizScore: score ?? existingProgress[0].quizScore,
+      })
+      .where(eq(userProgress.id, existingProgress[0].id));
+  } else {
+    await db.insert(userProgress).values({
+      userId,
+      trackId: stage.trackId,
+      contentId: contentIdentifier,
+      status: "completed",
+      quizScore: score,
+      startedAt: new Date(),
+      completedAt: new Date(),
+    });
+  }
+
+  const stats = await db
+    .select()
+    .from(userGamification)
+    .where(eq(userGamification.userId, userId))
+    .limit(1);
+
+  const currentStats = stats[0];
+  const baseXP = 50;
+  const newXP = (currentStats?.xp || 0) + baseXP;
+  const newLevel = Math.floor(newXP / 100) + 1;
+  const newEra = getEraForLevel(newLevel);
+
+  if (currentStats) {
+    await db
+      .update(userGamification)
+      .set({ xp: newXP, level: newLevel, currentEra: newEra })
+      .where(eq(userGamification.userId, userId));
+  }
+
+  return { success: true, newXP, newLevel, newEra } as const;
 }

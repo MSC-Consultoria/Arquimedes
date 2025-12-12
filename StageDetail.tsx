@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, CheckCircle2, Circle, Clock, Loader2, Play, Trophy } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, Clock, Loader2, Play, RefreshCcw, Trophy } from "lucide-react";
 import { useLocation, useParams } from "wouter";
+import { useMemo } from "react";
+import BottomNav from "./BottomNav";
 
 export default function StageDetail() {
   const params = useParams();
@@ -12,6 +14,10 @@ export default function StageDetail() {
 
   const { data: stage, isLoading: stageLoading } = trpc.stages.getById.useQuery({ id: stageId });
   const { data: tasks, isLoading: tasksLoading } = trpc.stages.getTasks.useQuery({ stageId });
+  const { data: progressByTrack, refetch: refetchProgress } = trpc.progress.getMyProgressByTrack.useQuery(
+    { trackId: stage?.trackId || 0 },
+    { enabled: !!stage?.trackId }
+  );
 
   const isLoading = stageLoading || tasksLoading;
 
@@ -34,9 +40,27 @@ export default function StageDetail() {
     );
   }
 
-  const completedTasks = 0; // TODO: Get from user progress
+  const progressByContent = useMemo(() => {
+    if (!tasks || !progressByTrack) return new Map<number, string>();
+    return tasks.reduce((map, task) => {
+      const identifier = task.contentId ?? task.id;
+      const userTask = progressByTrack.find((p) => p.contentId === identifier);
+      if (userTask) {
+        map.set(task.id, userTask.status);
+      }
+      return map;
+    }, new Map<number, string>());
+  }, [progressByTrack, tasks]);
+
+  const completedTasks = tasks?.filter((task) => progressByContent.get(task.id) === "completed").length || 0;
   const totalTasks = tasks?.length || 0;
   const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  const goToNextTask = () => {
+    if (!tasks || tasks.length === 0) return;
+    const nextTask = tasks.find((task) => progressByContent.get(task.id) !== "completed") || tasks[0];
+    setLocation(`/task/${nextTask.id}/execute`);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pb-20">
@@ -64,7 +88,12 @@ export default function StageDetail() {
       <div className="container max-w-2xl px-4 py-6">
         <Card className="border-blue-200 bg-white">
           <CardContent className="p-4 space-y-4">
-            <p className="text-sm text-gray-700 leading-relaxed">{stage.description}</p>
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm text-gray-700 leading-relaxed flex-1">{stage.description}</p>
+              <Button variant="ghost" size="icon" onClick={() => refetchProgress()}>
+                <RefreshCcw className="w-4 h-4" />
+              </Button>
+            </div>
 
             {/* Progress */}
             <div>
@@ -85,16 +114,16 @@ export default function StageDetail() {
         <div className="space-y-3">
           {tasks && tasks.length > 0 ? (
             tasks.map((task, index) => {
-              const isCompleted = false; // TODO: Get from user progress
+              const isCompleted = progressByContent.get(task.id) === "completed";
               const importance = task.importanceIndex || 3;
-              
+
               return (
-                <Card 
+                <Card
                   key={task.id}
                   className={`border-blue-200 hover:border-blue-400 transition-all cursor-pointer hover:shadow-md ${
                     isCompleted ? 'bg-blue-50/50' : 'bg-white'
                   }`}
-                  onClick={() => setLocation(`/task/${task.id}`)}
+                  onClick={() => setLocation(`/task/${task.id}/execute`)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
@@ -160,6 +189,20 @@ export default function StageDetail() {
           )}
         </div>
       </div>
+      {tasks && tasks.length > 0 && (
+        <div className="fixed bottom-16 left-0 right-0 bg-white/90 backdrop-blur border-t border-blue-100 px-4 py-3 md:bottom-4">
+          <div className="container max-w-2xl">
+            <Button
+              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+              size="lg"
+              onClick={goToNextTask}
+            >
+              Continuar próximo passo
+            </Button>
+          </div>
+        </div>
+      )}
+      <BottomNav />
     </div>
   );
 }
