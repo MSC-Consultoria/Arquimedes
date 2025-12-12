@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="360" viewBox="0 0 760 360">
+  <style>
+    .box { fill: #f5f8ff; stroke: #1f3c88; stroke-width: 2; rx: 12; ry: 12; }
+    .title { font: 700 16px 'Inter', 'Segoe UI', sans-serif; fill: #1f3c88; }
+    .text { font: 400 14px 'Inter', 'Segoe UI', sans-serif; fill: #223; }
+    .tag { fill: #e8f0ff; stroke: #5b8def; stroke-width: 1.5; rx: 8; ry: 8; }
+    .tag-text { font: 600 12px 'Inter', 'Segoe UI', sans-serif; fill: #1f3c88; }
+    .arrow { stroke: #1f3c88; stroke-width: 2; marker-end: url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#1f3c88" />
+    </marker>
+  </defs>
+
+  <rect class="box" x="40" y="40" width="240" height="140" />
+  <text class="title" x="60" y="70">Catálogo de trilhas</text>
+  <text class="text" x="60" y="100">• Filtros: domínio, dificuldade</text>
+  <text class="text" x="60" y="125">• Métricas: horas, estágios, tarefas</text>
+  <text class="text" x="60" y="150">• Fonte: lista TRACKS do app.py</text>
+
+  <rect class="box" x="280" y="200" width="220" height="130" />
+  <text class="title" x="300" y="230">Detalhe da trilha</text>
+  <text class="text" x="300" y="255">• Expansores por estágio</text>
+  <text class="text" x="300" y="280">• Descrições e tempo por tarefa</text>
+  <text class="text" x="300" y="305">• Dados: stages & tasks</text>
+
+  <rect class="box" x="540" y="80" width="180" height="180" />
+  <text class="title" x="560" y="110">Agenda semanal</text>
+  <text class="text" x="560" y="140">• Input: horas/semana</text>
+  <text class="text" x="560" y="165">• Saída: tarefas/semana</text>
+  <text class="text" x="560" y="190">• Base: cálculo</text>
+  <text class="text" x="560" y="210">plan_schedule()</text>
+
+  <line class="arrow" x1="280" y1="100" x2="520" y2="120" />
+  <line class="arrow" x1="500" y1="265" x2="540" y2="220" />
+  <line class="arrow" x1="320" y1="180" x2="360" y2="200" />
+
+  <rect class="tag" x="90" y="12" width="170" height="24" />
+  <text class="tag-text" x="100" y="29">Entrada: filtros + TRACKS</text>
+  <rect class="tag" x="320" y="340" width="200" height="24" />
+  <text class="tag-text" x="332" y="357">Saída: trilha + cronograma</text>
+</svg>
