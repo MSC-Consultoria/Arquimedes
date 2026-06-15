@@ -1,20 +1,47 @@
-# Arquimedes
+# Arquimedes (MSC Consultoria) - snapshot historico
 
-Este repositório agora inclui um aplicativo Streamlit (`app.py`) para explorar
-as trilhas educacionais do Arquimedes. O fluxo recomendado é publicar direto a
-partir do GitHub, sem necessidade de rodar localmente.
+> **ARQUIVADO em 2026-06-15** - mantido como snapshot historico.
+> Codigo original: 7 branches, 408KB TypeScript com 11+ documentos tecnicos.
 
-## Deploy no Streamlit Cloud
-1. Mantenha este repositório (ou um fork) no GitHub.
-2. No painel do [Streamlit Community Cloud](https://streamlit.io/cloud), crie
-   um novo app apontando para este repositório e defina `app.py` como
-   **Main file path**.
-3. Confirme que `requirements.txt` está listado; o serviço instalará
-   automaticamente o Streamlit.
-4. Publique e compartilhe o link gerado.
+**Status:** Read-only - Atualizado 2026-06-15
 
-## Visão geral do app
-- Filtros por domínio e dificuldade para encontrar as trilhas mais relevantes.
-- Estimativas de horas por trilha, número de estágios e total de tarefas.
-- Sugestão de distribuição semanal das tarefas com base na sua disponibilidade.
-- Orientações rápidas de deploy diretamente na interface.
+---
+
+## O que era
+
+Tentativa de "Sistema Educacional MSC Consultoria" - projeto React + TypeScript com
+varios modulos (Admin, Dashboard, App.tsx) e documentacao extensa em `.md`.
+
+Criado em 2025-12-12, atualizado pela ultima vez em 2026-01-08.
+
+## Estrutura preservada
+
+```
+client/ (nao enviado neste repo)
+11_trilhas_msc_detalhadas.md
+Admin.tsx
+Analise de Requisitos - Sistema Educacional MSC Consultoria.md
+App.tsx
+Arquitetura de Backend e Estrategia de Coleta de Dados.md
+Dashboard.tsx
+Dockerfile
+API_DOCUMENTATION.md
+Documentacao Tecnica Completa - Sistema Educacional MSC.md
++ 7 branches de iteracao
+```
+
+## Por que arquivado (e NAO deletado)
+
+1. **Snapshot da iteração original** - 7 branches documentam evolução
+2. **Documentação de referência** - vários `.md` de análise de requisitos e arquitetura
+   podem ser úteis para futuros projetos educacionais MSC
+3. **Rastros de decisão** - preserva o que foi pensado antes do pivô
+
+## Repos relacionados (ativos)
+
+- [Msc-Company-Org/Academy](https://github.com/Msc-Company-Org/Academy) - plataforma educacional ativa
+- [MSC-Consultoria/arquimedes0.0.1](https://github.com/MSC-Consultoria/arquimedes0.0.1) - versao 0.0.1 arquivada (semente Prometheus)
+
+## Contato
+
+Owner: Moises Costa (Finish-Him)
